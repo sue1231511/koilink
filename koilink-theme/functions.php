@@ -43,6 +43,8 @@ add_action( 'wp_enqueue_scripts', function () {
 		'apply_nonce'   => wp_create_nonce( 'koilink_apply' ),
 		'resume_nonce'  => wp_create_nonce( 'koilink_resume' ),
 		'chat_nonce'    => wp_create_nonce( 'koilink_chat' ),
+		'status_nonce'  => wp_create_nonce( 'koilink_status' ),
+		'rest_nonce'    => wp_create_nonce( 'wp_rest' ),
 		'test_nonce'    => wp_create_nonce( 'koilink_test' ),
 		'status_nonce'  => wp_create_nonce( 'koilink_status' ),
 		'rest_nonce'    => wp_create_nonce( 'wp_rest' ),
