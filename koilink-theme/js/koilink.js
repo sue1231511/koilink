@@ -334,7 +334,10 @@
 			fetch('/wp-json/wp/v2/users/me/application-passwords', {
 				method: 'POST',
 				credentials: 'same-origin',
-				headers: { 'Content-Type': 'application/json' },
+				headers: {
+					'Content-Type': 'application/json',
+					'X-WP-Nonce': D.rest_nonce
+				},
 				body: JSON.stringify({ name: credName })
 			})
 			.then(function (r) { return r.json(); })
