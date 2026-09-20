@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Koilink 一键安装/升级脚本（在 Zeabur WordPress 服务的终端里执行）：
 #   curl -sL https://raw.githubusercontent.com/sue1231511/koilink/main/install.sh | bash
-set -e
 
 cd /tmp
 rm -rf koilink-main k.zip
@@ -15,16 +14,6 @@ php -r '$z=new ZipArchive();if($z->open("k.zip")!==true){fwrite(STDERR,"解压�
 echo "==> 安装主题 koilink-theme..."
 rm -rf /var/www/html/wp-content/themes/koilink-theme
 cp -r koilink-main/koilink-theme /var/www/html/wp-content/themes/
-
-echo "==> 解码应用图标（如果文件存在）..."
-cd /var/www/html/wp-content/themes/koilink-theme
-for b64 in icon-512.png.b64 icon-192.png.b64 apple-touch-icon.png.b64; do
-  png="${b64%.b64}"
-  if [ -f "$b64" ]; then
-    base64 -d "$b64" > "$png" 2>/dev/null || true
-  fi
-done
-cd /tmp
 
 echo "==> 同步插件 koilink-core..."
 rm -rf /var/www/html/wp-content/plugins/koilink-core
