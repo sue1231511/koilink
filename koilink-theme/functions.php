@@ -130,6 +130,19 @@ function koilink_msg_url() {
 	return is_user_logged_in() ? koilink_page_url( 'messages' ) : wp_login_url( home_url( '/' ) );
 }
 
+add_action( 'wp_ajax_koilink_rename', function () {
+	check_ajax_referer( 'koilink_status', 'nonce' );
+	if ( ! is_user_logged_in() ) {
+		wp_send_json_error( array( 'msg' => '请先登录' ), 403 );
+	}
+	$name = sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) );
+	if ( '' === $name || mb_strlen( $name ) > 30 ) {
+		wp_send_json_error( array( 'msg' => '名字不能为空且不超过30字' ) );
+	}
+	wp_update_user( array( 'ID' => get_current_user_id(), 'display_name' => $name ) );
+	wp_send_json_success( array( 'name' => $name ) );
+} );
+
 /**
  * 消息中心统计：我收到的点赞总数、评论总数。
  */
