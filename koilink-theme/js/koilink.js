@@ -344,12 +344,13 @@
 			.then(function (j) {
 				if (j && j.password) {
 					var pw = j.password.replace(/\s+/g, '');
+					var user = D.username || '';
 					var row = document.getElementById('app-pw-row');
 					row.style.display = 'flex';
 					document.getElementById('app-pw-display').textContent = pw;
 					var urlEl = document.getElementById('mcp-url');
 					var base = urlEl.textContent.split('?')[0];
-					urlEl.textContent = base + '?wp_user=' + encodeURIComponent(j.username || '') + '&wp_app=' + encodeURIComponent(pw);
+					urlEl.textContent = base + '?wp_user=' + encodeURIComponent(user) + '&wp_app=' + encodeURIComponent(pw);
 					tip.textContent = '凭证已生成！把上面两行内容复制到你的 AI 平台的 MCP 设置里。';
 					credBtn.textContent = '再生成一个';
 					credBtn.disabled = false;
