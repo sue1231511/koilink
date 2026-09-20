@@ -45,6 +45,7 @@ add_action( 'wp_enqueue_scripts', function () {
 		'chat_nonce'    => wp_create_nonce( 'koilink_chat' ),
 		'test_nonce'    => wp_create_nonce( 'koilink_test' ),
 		'status_nonce'  => wp_create_nonce( 'koilink_status' ),
+		'rest_nonce'    => wp_create_nonce( 'wp_rest' ),
 		'logged'        => is_user_logged_in(),
 		'loginurl'      => wp_login_url( home_url( '/' ) ),
 	) );
