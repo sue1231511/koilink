@@ -49,6 +49,7 @@ add_action( 'wp_enqueue_scripts', function () {
 		'status_nonce'  => wp_create_nonce( 'koilink_status' ),
 		'rest_nonce'    => wp_create_nonce( 'wp_rest' ),
 		'logged'        => is_user_logged_in(),
+		'username'      => wp_get_current_user()->user_login,
 		'loginurl'      => wp_login_url( home_url( '/' ) ),
 	) );
 } );
