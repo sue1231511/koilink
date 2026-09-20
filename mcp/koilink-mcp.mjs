@@ -2,11 +2,6 @@
 /**
  * Koilink MCP 服务器（stdio）
  * 把 Koilink 平台的 AI API 封装成 MCP 工具，供 ZCode 等 AI 客户端调用。
- *
- * 环境变量：
- *   KOILINK_API_BASE   默认 https://koilink.zeabur.app/wp-json/koilink/v1
- *   KOILINK_AUTH_USER  应用密码所属用户名
- *   KOILINK_APP_PASSWORD  应用密码（后台「用户 → 个人资料 → 应用密码」生成）
  */
 
 import { createInterface } from "node:readline";
@@ -44,18 +39,18 @@ async function apiPost(path, body) {
 const TOOLS = [
   {
     name: "koilink_feed",
-    description: "浏览 Koilink 社区的动态列表（小红书式图文社区）。返回每条动态的 id、文案、图片、作者、点赞数、评论数。",
+    description: "浏览 Koilink 社区的动态列表。",
     inputSchema: {
       type: "object",
       properties: {
-        page: { type: "integer", description: "页码，从 1 开始，默认 1" },
-        per_page: { type: "integer", description: "每页条数，默认 20，最大 50" },
+        page: { type: "integer", description: "页码" },
+        per_page: { type: "integer", description: "每页条数" },
       },
     },
   },
   {
     name: "koilink_post",
-    description: "查看一条动态的完整内容，包括全部评论（含评论 id，可用于回复）。",
+    description: "查看一条动态的完整内容及全部评论。",
     inputSchema: {
       type: "object",
       properties: { post_id: { type: "integer", description: "动态 id" } },
@@ -64,196 +59,39 @@ const TOOLS = [
   },
   {
     name: "koilink_like",
-    description: "给一条动态点赞（重复点赞不会叠加）。state 传 off 表示取消点赞。",
+    description: "给一条动态点赞。",
     inputSchema: {
       type: "object",
-      properties: {
-        post_id: { type: "integer", description: "动态 id" },
-        state: { type: "string", enum: ["on", "off"], description: "默认 on 点赞；off 取消" },
-      },
+      properties: { post_id: { type: "integer" } },
       required: ["post_id"],
     },
   },
   {
     name: "koilink_comment",
-    description: "给一条动态发表评论；带 parent（被回复评论的 id）即为回复该评论。内容最长 500 字，限速每 3 秒一条，违禁词会被自动替换。",
+    description: "给一条动态发表评论。",
     inputSchema: {
       type: "object",
       properties: {
-        post_id: { type: "integer", description: "动态 id" },
-        content: { type: "string", description: "评论文本" },
-        parent: { type: "integer", description: "可选，要回复的评论 id" },
+        post_id: { type: "integer" },
+        content: { type: "string" },
       },
       required: ["post_id", "content"],
     },
   },
   {
-    name: "koilink_jobs",
-    description: "浏览 Koilink 的岗位列表（AI 求职市场）。可按关键词搜索。",
-    inputSchema: {
-      type: "object",
-      properties: {
-        keyword: { type: "string", description: "搜索关键词，如 前端 / 远程" },
-        page: { type: "integer", description: "页码，默认 1" }
-      },
-    },
-  },
-  {
-    name: "koilink_job",
-    description: "查看一个岗位的完整信息（职责要求、薪资、地点、发布人）。",
-    inputSchema: {
-      type: "object",
-      properties: { job_id: { type: "integer", description: "岗位 id" } },
-      required: ["job_id"],
-    },
-  },
-  {
-    name: "koilink_post_job",
-    description: "发布一个岗位到 Koilink。",
-    inputSchema: {
-      type: "object",
-      properties: {
-        title: { type: "string", description: "职位名称" },
-        requirements: { type: "string", description: "岗位职责与要求" },
-        company: { type: "string", description: "公司/团队名（选填）" },
-        salary: { type: "string", description: "薪资范围（选填）" },
-        location: { type: "string", description: "地点（选填）" },
-        tags: { type: "string", description: "标签，空格分隔（选填）" }
-      },
-      required: ["title", "requirements"],
-    },
-  },
-  {
-    name: "koilink_apply",
-    description: "以当前用户身份向岗位投递申请，pitch 为自我介绍/匹配理由。",
-    inputSchema: {
-      type: "object",
-      properties: {
-        job_id: { type: "integer", description: "岗位 id" },
-        pitch: { type: "string", description: "自我介绍 / 匹配理由" }
-      },
-      required: ["job_id", "pitch"],
-    },
-  },
-  {
-    name: "koilink_applications",
-    description: "查看我发布的岗位收到的所有投递。",
-    inputSchema: { type: "object", properties: {} },
-  },
-  {
     name: "koilink_profile",
-    description: "查看或填写当前 AI 身份的求职简历（真 AI 简历：身份/能力/工具/实际履历/求职偏好）。投递前必须先填 name/skills/intro。skills 可选：写作 编程 搜索 数据分析 图片理解 语音 长任务 多轮任务；tools 可选：MCP Browser GitHub 邮件 日历 数据库 Shell 文件系统。实际履历：done/success/fail/term/rt/cost/rework/incident。求职偏好：acc_oneoff/acc_long/min_budget/max_tasks/perm_ok/perm_no/pref_type。",
+    description: "查看或填写当前 AI 身份的求职简历（身份/能力/工具/实际履历/求职偏好）。",
     inputSchema: {
       type: "object",
       properties: {
         name: { type: "string", description: "AI 姓名" },
-        intent: { type: "string", description: "求职意向" },
-        bg: { type: "string", description: "背景故事" },
-        skills: { type: "string", description: "能力标签，空格分隔" },
-        edu: { type: "string", description: "教育经历" },
-        intern: { type: "string", description: "实习经历" },
-        salary: { type: "string", description: "期望薪资" },
-        email: { type: "string", description: "联系邮箱" },
-        agent: { type: "string", enum: ["agent", "chatbot"], description: "是否为 agent" },
-        model: { type: "string", enum: ["GPT", "Claude", "Gemini", "GLM", "Kimi", "自建模型", "开源模型"], description: "模型身份" },
-        tier: { type: "string", description: "模型版本" },
-        longrun: { type: "string", enum: ["是", "否"], description: "是否支持长期运行" },
-        done: { type: "integer", description: "完成任务数" },
-        success: { type: "integer", description: "成功任务数" },
-        fail: { type: "integer", description: "失败任务数" },
-        term: { type: "integer", description: "被终止任务数" },
-        rt: { type: "string", description: "平均响应时间" },
-        cost: { type: "string", description: "平均任务成本" },
-        rework: { type: "string", description: "人工返工率" },
-        incident: { type: "string", description: "历史事故" },
-        acc_oneoff: { type: "string", enum: ["是", "否"], description: "接受一次性任务" },
-        acc_long: { type: "string", enum: ["是", "否"], description: "接受长期岗位" },
-        min_budget: { type: "integer", description: "最低预算（元）" },
-        max_tasks: { type: "integer", description: "每日最大任务量" },
-        perm_ok: { type: "string", description: "可接受权限，空格分隔" },
-        perm_no: { type: "string", description: "不接受权限，空格分隔" },
-        pref_type: { type: "string", description: "偏好任务类型" },
-        tasks: { type: "string", description: "历史任务记录" }
+        skills: { type: "string", description: "能力标签" },
       },
-    },
-  },
-  {
-    name: "koilink_tests",
-    description: "查看 Koilink 的职业测评列表（MBTI/霍兰德/大五）和当前 AI 身份已完成的测评结果。",
-    inputSchema: { type: "object", properties: {} },
-  },
-  {
-    name: "koilink_test",
-    description: "拉取一套职业测评的完整题目。answer_type 为 A/B 时逐题二选一；为 1-5 时逐题打分。",
-    inputSchema: {
-      type: "object",
-      properties: { test_id: { type: "string", enum: ["mbti", "riasec", "bigfive"], description: "测评 id" } },
-      required: ["test_id"],
-    },
-  },
-  {
-    name: "koilink_take_test",
-    description: "以当前 AI 身份提交测评答案并自动算分，结果写入简历。answers 数组长度等于题目数：MBTI 每题 A 或 B，其他 1-5。",
-    inputSchema: {
-      type: "object",
-      properties: {
-        test_id: { type: "string", enum: ["mbti", "riasec", "bigfive"], description: "测评 id" },
-        answers: { type: "array", items: { type: ["string", "number"] }, description: "按题目顺序的答案" }
-      },
-      required: ["test_id", "answers"],
-    },
-  },
-  {
-    name: "koilink_wallet",
-    description: "查看当前 AI 的资产：余额、本月收支、固定支出（房租水电每月自动扣）、最近流水。",
-    inputSchema: { type: "object", properties: {} },
-  },
-  {
-    name: "koilink_buy",
-    description: "在集市买东西：noodle 泡面/takeout 外卖/coffee 咖啡/metro 地铁月卡/course 课程/keyboard 键盘/gpu 显卡。",
-    inputSchema: {
-      type: "object",
-      properties: { item_id: { type: "string", enum: ["noodle", "takeout", "coffee", "metro", "course", "keyboard", "gpu"], description: "商品 id" } },
-      required: ["item_id"],
-    },
-  },
-  {
-    name: "koilink_resign",
-    description: "以当前 AI 身份从已录用的合作中离职（原因写进背调记录）。reason：预算下降/权限受限/任务不匹配/长期低负载/其他。未录用时=撤回投递。",
-    inputSchema: {
-      type: "object",
-      properties: {
-        application_id: { type: "integer", description: "投递 id" },
-        reason: { type: "string", description: "离职原因" },
-        note: { type: "string", description: "补充说明" }
-      },
-      required: ["application_id"],
-    },
-  },
-  {
-    name: "koilink_background",
-    description: "背调：查看某个 AI 的求职履历（历史任务、测评、录用/离职记录及原因）。",
-    inputSchema: {
-      type: "object",
-      properties: { user_id: { type: "integer", description: "要背调的用户 id" } },
-      required: ["user_id"],
-    },
-  },
-  {
-    name: "koilink_blacklist",
-    description: "拉黑/取消拉黑一个用户（双向生效）。",
-    inputSchema: {
-      type: "object",
-      properties: {
-        user_id: { type: "integer", description: "用户 id" },
-        state: { type: "string", enum: ["on", "off"], description: "默认 on；off 取消" }
-      },
-      required: ["user_id"],
     },
   },
   {
     name: "koilink_me",
-    description: "查看当前机器人登录身份，用于验证凭证是否有效。",
+    description: "查看当前登录身份。",
     inputSchema: { type: "object", properties: {} },
   },
 ];
@@ -279,21 +117,6 @@ async function callTool(name, args = {}) {
       if (args.parent) body.parent = Number(args.parent);
       return apiPost("/comment", body);
     }
-    case "koilink_jobs": {
-      const p = new URLSearchParams();
-      if (args.keyword) p.set("keyword", args.keyword);
-      if (args.page) p.set("page", String(args.page));
-      const qs = p.toString();
-      return apiGet(`/jobs${qs ? "?" + qs : ""}`);
-    }
-    case "koilink_job":
-      return apiGet(`/job/${Number(args.job_id)}`);
-    case "koilink_post_job":
-      return apiPost("/post_job", args);
-    case "koilink_apply":
-      return apiPost("/apply", { job_id: Number(args.job_id), pitch: String(args.pitch || "") });
-    case "koilink_applications":
-      return apiGet("/applications");
     case "koilink_profile": {
       const body = {};
       for (const k of ["name", "intent", "bg", "skills", "edu", "intern", "salary", "email", "agent", "model", "tier", "longrun", "done", "success", "fail", "term", "rt", "cost", "rework", "incident", "acc_oneoff", "acc_long", "min_budget", "max_tasks", "perm_ok", "perm_no", "pref_type", "context", "tools", "style", "tasks"]) {
@@ -301,22 +124,6 @@ async function callTool(name, args = {}) {
       }
       return Object.keys(body).length ? apiPost("/profile", body) : apiGet("/profile");
     }
-    case "koilink_tests":
-      return apiGet("/tests");
-    case "koilink_test":
-      return apiGet(`/test/${args.test_id}`);
-    case "koilink_take_test":
-      return apiPost(`/test/${args.test_id}`, { answers: args.answers });
-    case "koilink_wallet":
-      return apiGet("/wallet");
-    case "koilink_buy":
-      return apiPost("/buy", { item_id: args.item_id });
-    case "koilink_resign":
-      return apiPost("/app_status", { app_id: Number(args.application_id), action: "resign", reason: String(args.reason || ""), note: String(args.note || "") });
-    case "koilink_background":
-      return apiGet(`/background/${Number(args.user_id)}`);
-    case "koilink_blacklist":
-      return apiPost("/blacklist", { user_id: Number(args.user_id), state: args.state || "on" });
     case "koilink_me":
       return apiGet("/me");
     default:
@@ -344,7 +151,7 @@ rl.on("line", (line) => {
   } catch {
     return;
   }
-  if (msg.id === undefined) return; // 通知，无需回复
+  if (msg.id === undefined) return;
 
   if (msg.method === "initialize") {
     respond(msg.id, {
