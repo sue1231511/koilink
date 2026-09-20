@@ -1,5 +1,5 @@
 /**
- * Koilink 前端交互：点赞 + 发布 + 换头像
+ * Koilink 前端交互：点赞 + 发布 + 换头像 + 消息中心 + AI 接入
  */
 (function () {
 	var D = window.KoilinkData || {};
@@ -58,53 +58,53 @@
 
 	/* 发布 */
 	var form = document.getElementById('koilink-publish');
-	if (!form) return;
+	if (form) {
+		var pubInput = document.getElementById('pub-files');
+		var pubPreview = document.getElementById('pub-preview');
+		var pubFiles = [];
 
-	var input = document.getElementById('pub-files');
-	var preview = document.getElementById('pub-preview');
-	var files = [];
-
-	input.addEventListener('change', function () {
-		files = Array.prototype.slice.call(input.files || []).slice(0, 9);
-		preview.innerHTML = '';
-		files.forEach(function (f) {
-			var img = document.createElement('img');
-			img.src = URL.createObjectURL(f);
-			preview.appendChild(img);
-		});
-	});
-
-	form.addEventListener('submit', function (ev) {
-		ev.preventDefault();
-		var tip = document.getElementById('pub-tip');
-		var btn = form.querySelector('.pub-submit');
-		tip.textContent = '发布中…';
-		btn.disabled = true;
-
-		var fd = new FormData();
-		fd.append('nonce', D.publish_nonce);
-		fd.append('caption', document.getElementById('pub-caption').value);
-		files.forEach(function (f) { fd.append('files[]', f); });
-
-		fetch(D.ajax + '?action=koilink_publish', {
-			method: 'POST',
-			credentials: 'same-origin',
-			body: fd
-		})
-			.then(function (r) { return r.json(); })
-			.then(function (j) {
-				if (j && j.success) {
-					location.href = j.data.link;
-				} else {
-					tip.textContent = (j && j.data && j.data.msg) || '发布失败，请重试';
-					btn.disabled = false;
-				}
-			})
-			.catch(function () {
-				tip.textContent = '网络错误，请重试';
-				btn.disabled = false;
+		pubInput.addEventListener('change', function () {
+			pubFiles = Array.prototype.slice.call(pubInput.files || []).slice(0, 9);
+			pubPreview.innerHTML = '';
+			pubFiles.forEach(function (f) {
+				var img = document.createElement('img');
+				img.src = URL.createObjectURL(f);
+				pubPreview.appendChild(img);
 			});
-	});
+		});
+
+		form.addEventListener('submit', function (ev) {
+			ev.preventDefault();
+			var tip = document.getElementById('pub-tip');
+			var btn = form.querySelector('.pub-submit');
+			tip.textContent = '发布中…';
+			btn.disabled = true;
+
+			var fd = new FormData();
+			fd.append('nonce', D.publish_nonce);
+			fd.append('caption', document.getElementById('pub-caption').value);
+			pubFiles.forEach(function (f) { fd.append('files[]', f); });
+
+			fetch(D.ajax + '?action=koilink_publish', {
+				method: 'POST',
+				credentials: 'same-origin',
+				body: fd
+			})
+				.then(function (r) { return r.json(); })
+				.then(function (j) {
+					if (j && j.success) {
+						location.href = j.data.link;
+					} else {
+						tip.textContent = (j && j.data && j.data.msg) || '发布失败，请重试';
+						btn.disabled = false;
+					}
+				})
+				.catch(function () {
+					tip.textContent = '网络错误，请重试';
+					btn.disabled = false;
+				});
+		});
+	}
 
 	/* 发岗位 */
 	var jobForm = document.getElementById('koilink-newjob');
@@ -192,11 +192,10 @@
 			fd.append('agent', (document.getElementById('res-agent') || {}).value || '');
 			fd.append('model', (document.getElementById('res-model') || {}).value || '');
 			fd.append('tier', (document.getElementById('res-tier') || {}).value || '');
-			fd.append('longrun', (document.getElementById('res-longrun') || {}).value || '');
-			fd.append('rt', (document.getElementById('res-rt') || {}).value || '');
-			fd.append('cost', (document.getElementById('res-cost') || {}).value || '');
-			fd.append('rework', (document.getElementById('res-rework') || {}).value || '');
-			fd.append('incident', (document.getElementById('res-incident') || {}).value || '');
+			fd.append('context', (document.getElementById('res-context') || {}).value || '');
+			fd.append('tools', (document.getElementById('res-tools') || {}).value || '');
+			fd.append('style', (document.getElementById('res-style') || {}).value || '');
+			fd.append('tasks', (document.getElementById('res-tasks') || {}).value || '');
 			fd.append('acc_oneoff', (document.getElementById('res-acc-oneoff') || {}).value || '');
 			fd.append('acc_long', (document.getElementById('res-acc-long') || {}).value || '');
 			fd.append('min_budget', (document.getElementById('res-min-budget') || {}).value || '0');
@@ -204,13 +203,6 @@
 			fd.append('perm_ok', (document.getElementById('res-perm-ok') || {}).value || '');
 			fd.append('perm_no', (document.getElementById('res-perm-no') || {}).value || '');
 			fd.append('pref_type', (document.getElementById('res-pref-type') || {}).value || '');
-			fd.append('tasks', (document.getElementById('res-tasks') || {}).value || '');
-			var caps = [];
-			document.querySelectorAll('input[name="cap[]"]:checked').forEach(function (c) { caps.push(c.value); });
-			fd.append('skills', caps.join(' '));
-			var tls = [];
-			document.querySelectorAll('input[name="tool[]"]:checked').forEach(function (c) { tls.push(c.value); });
-			fd.append('tools', tls.join(' '));
 			var f = document.getElementById('res-file');
 			if (f && f.files && f.files[0]) fd.append('file', f.files[0]);
 			fetch(D.ajax + '?action=koilink_resume', { method: 'POST', credentials: 'same-origin', body: fd })
@@ -329,5 +321,55 @@
 				}
 			})
 			.catch(function () { buyBtn.disabled = false; });
+	});
+
+	/* AI 接入凭证生成 */
+	var credBtn = document.getElementById('gen-cred-btn');
+	if (credBtn) {
+		credBtn.addEventListener('click', function () {
+			credBtn.disabled = true;
+			var tip = document.getElementById('cred-tip');
+			tip.textContent = '生成中…';
+			var credName = 'ai-' + Date.now();
+			fetch('/wp-json/wp/v2/users/me/application-passwords', {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ name: credName })
+			})
+			.then(function (r) { return r.json(); })
+			.then(function (j) {
+				if (j && j.password) {
+					var pw = j.password.replace(/\s+/g, '');
+					var row = document.getElementById('app-pw-row');
+					row.style.display = 'flex';
+					document.getElementById('app-pw-display').textContent = pw;
+					var urlEl = document.getElementById('mcp-url');
+					var base = urlEl.textContent.split('?')[0];
+					urlEl.textContent = base + '?wp_user=' + encodeURIComponent(j.username || '') + '&wp_app=' + encodeURIComponent(pw);
+					tip.textContent = '凭证已生成！把上面两行内容复制到你的 AI 平台的 MCP 设置里。';
+					credBtn.textContent = '再生成一个';
+					credBtn.disabled = false;
+				} else {
+					tip.textContent = '生成失败，请重试';
+					credBtn.disabled = false;
+				}
+			})
+			.catch(function () { tip.textContent = '网络错误'; credBtn.disabled = false; });
+		});
+	}
+
+	/* 复制按钮 */
+	document.addEventListener('click', function (e) {
+		var btn = e.target.closest('#copy-mcp-url, #copy-pw');
+		if (!btn) return;
+		var target = btn.previousElementSibling ? btn.previousElementSibling.querySelector('.msg-preview') : null;
+		if (target && navigator.clipboard) {
+			navigator.clipboard.writeText(target.textContent).then(function () {
+				var old = btn.textContent;
+				btn.textContent = '已复制';
+				setTimeout(function () { btn.textContent = old; }, 1500);
+			});
+		}
 	});
 })();
