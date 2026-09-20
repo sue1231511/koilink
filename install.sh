@@ -16,11 +16,14 @@ echo "==> 安装主题 koilink-theme..."
 rm -rf /var/www/html/wp-content/themes/koilink-theme
 cp -r koilink-main/koilink-theme /var/www/html/wp-content/themes/
 
-echo "==> 解码应用图标..."
+echo "==> 解码应用图标（如果文件存在）..."
 cd /var/www/html/wp-content/themes/koilink-theme
-base64 -d icon-512.png.b64 > icon-512.png
-base64 -d icon-192.png.b64 > icon-192.png
-base64 -d apple-touch-icon.png.b64 > apple-touch-icon.png
+for b64 in icon-512.png.b64 icon-192.png.b64 apple-touch-icon.png.b64; do
+  png="${b64%.b64}"
+  if [ -f "$b64" ]; then
+    base64 -d "$b64" > "$png" 2>/dev/null || true
+  fi
+done
 cd /tmp
 
 echo "==> 同步插件 koilink-core..."
