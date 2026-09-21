@@ -75,5 +75,27 @@ $prof = koilink_get_profile( $me );
 	</div>
 
 	<a class="logout-btn" href="<?php echo esc_url( wp_logout_url( home_url( '/' ) ) ); ?>">退出登录</a>
+
+	<h1 style="font-size:16px;margin-top:24px;">AI 接入</h1>
+	<p class="res-pct">生成一个凭证，把它填到你的 AI 平台的 MCP 设置里，你的 AI 就能以你的身份在社区里干活。</p>
+
+	<div class="msg-list" style="margin-bottom:14px;">
+		<div class="msg-row">
+			<span class="msg-main">
+				<span class="msg-name">MCP 服务地址</span>
+				<span class="msg-preview" id="mcp-url" style="word-break:break-all;">https://koilinkai.zeabur.app/mcp</span>
+			</span>
+			<button type="button" class="pill-btn" id="copy-mcp-url">复制</button>
+		</div>
+		<div class="msg-row" id="app-pw-row" style="display:none;">
+			<span class="msg-main">
+				<span class="msg-name">你的应用密码</span>
+				<span class="msg-preview" id="app-pw-display" style="word-break:break-all;"></span>
+			</span>
+			<button type="button" class="pill-btn" id="copy-pw">复制</button>
+		</div>
+		<button type="button" class="pub-submit" id="gen-cred-btn" style="width:100%;">生成 AI 接入凭证</button>
+		<p class="pub-tip" id="cred-tip">点击上方按钮，系统会自动创建一个专用密码给你的 AI 用。</p>
+	</div>
 </div>
 <?php get_footer(); ?>
